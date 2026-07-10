@@ -477,8 +477,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
 
-    <!-- SheetJS para Excel -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js"></script>
+    <!-- ExcelJS para Excel profesional -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
 
     <script>
         // CONFIGURACIÓN DE FIREBASE - CREDENCIALES CORRECTAS
@@ -698,160 +698,203 @@
             event.target.classList.add('active');
         }
 
-        function exportarExcel() {
+        async function exportarExcel() {
             if (registrosFiltrados.length === 0) {
                 mostrarAlerta('Sin datos para exportar', 'error');
                 return;
             }
 
-            // Crear workbook
-            const wb = XLSX.utils.book_new();
+            try {
+                const workbook = new ExcelJS.Workbook();
 
-            // ===== HOJA 1: CONSOLIDADO DETALLADO =====
-            const datosExcel = registrosFiltrados.map(r => ({
-                'Supermercado': r.negocio,
-                'Producto': r.producto,
-                '900ml (₡)': r.precio900,
-                '1.5L (₡)': r.precio15L,
-                '3L (₡)': r.precio3L,
-                'Stock 900ml': r.stock900 || 0,
-                'Stock 1.5L': r.stock15L || 0,
-                'Stock 3L': r.stock3L || 0,
-                'Stock Total': (r.stock900 || 0) + (r.stock15L || 0) + (r.stock3L || 0),
-                'Usuario': r.usuario,
-                'Fecha y Hora': r.fecha
-            }));
+                // ===== HOJA 1: CONSOLIDADO DETALLADO =====
+                const ws1 = workbook.addWorksheet('Consolidado', { pageSetup: { paperSize: 9, orientation: 'landscape' } });
 
-            const ws1 = XLSX.utils.json_to_sheet(datosExcel);
-            ws1['!cols'] = [
-                { wch: 25 },
-                { wch: 25 },
-                { wch: 15 },
-                { wch: 15 },
-                { wch: 15 },
-                { wch: 12 },
-                { wch: 12 },
-                { wch: 12 },
-                { wch: 15 },
-                { wch: 20 },
-                { wch: 20 }
-            ];
+                // Encabezados
+                const headers = ['Supermercado', 'Producto', '900ml (₡)', '1.5L (₡)', '3L (₡)', 'Stock 900ml', 'Stock 1.5L', 'Stock 3L', 'Stock Total', 'Usuario', 'Fecha y Hora'];
+                ws1.addRow(headers);
 
-            // Estilos para encabezados
-            const encabezadoStyle = {
-                font: { bold: true, color: { rgb: "FFFFFF" }, size: 12 },
-                fill: { fgColor: { rgb: "1e40af" } },
-                alignment: { horizontal: "center", vertical: "center", wrapText: true },
-                border: {
-                    top: { style: "thin" },
-                    bottom: { style: "thin" },
-                    left: { style: "thin" },
-                    right: { style: "thin" }
-                }
-            };
+                // Estilos encabezado
+                const headerStyle = {
+                    font: { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 },
+                    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1e40af' } },
+                    alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+                    border: { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } }
+                };
 
-            // Aplicar estilos a encabezados
-            for (let col = 0; col < 11; col++) {
-                const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
-                ws1[cellRef].s = encabezadoStyle;
+                ws1.getRow(1).eachCell(cell => {
+                    cell.style = headerStyle;
+                });
+
+                // Agregar datos
+                registrosFiltrados.forEach(r => {
+                    ws1.addRow([
+                        r.negocio,
+                        r.producto,
+                        r.precio900,
+                        r.precio15L,
+                        r.precio3L,
+                        r.stock900 || 0,
+                        r.stock15L || 0,
+                        r.stock3L || 0,
+                        (r.stock900 || 0) + (r.stock15L || 0) + (r.stock3L || 0),
+                        r.usuario,
+                        r.fecha
+                    ]);
+                });
+
+                // Ajustar columnas
+                ws1.columns = [
+                    { width: 25 },
+                    { width: 25 },
+                    { width: 15 },
+                    { width: 15 },
+                    { width: 15 },
+                    { width: 12 },
+                    { width: 12 },
+                    { width: 12 },
+                    { width: 15 },
+                    { width: 20 },
+                    { width: 20 }
+                ];
+
+                // Estilos para datos
+                ws1.eachRow((row, rowNumber) => {
+                    if (rowNumber > 1) {
+                        row.eachCell(cell => {
+                            cell.border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
+                            cell.alignment = { horizontal: 'left', vertical: 'center' };
+                        });
+                        // Centrar números
+                        row.getCell(3).alignment = { horizontal: 'right' };
+                        row.getCell(4).alignment = { horizontal: 'right' };
+                        row.getCell(5).alignment = { horizontal: 'right' };
+                    }
+                });
+
+                // ===== HOJA 2: RESUMEN POR PRODUCTO =====
+                const ws2 = workbook.addWorksheet('Resumen Productos');
+
+                const productos = {};
+                registrosFiltrados.forEach(r => {
+                    if (!productos[r.producto]) {
+                        productos[r.producto] = {
+                            precios900: [],
+                            precios15L: [],
+                            precios3L: [],
+                            supermercados: new Set()
+                        };
+                    }
+                    if (r.precio900 > 0) productos[r.producto].precios900.push(r.precio900);
+                    if (r.precio15L > 0) productos[r.producto].precios15L.push(r.precio15L);
+                    if (r.precio3L > 0) productos[r.producto].precios3L.push(r.precio3L);
+                    productos[r.producto].supermercados.add(r.negocio);
+                });
+
+                const headerResumen = ['Producto', 'Promedio 900ml', 'Mín 900ml', 'Máx 900ml', 'Promedio 1.5L', 'Mín 1.5L', 'Máx 1.5L', 'Promedio 3L', 'Mín 3L', 'Máx 3L', 'Supermercados'];
+                ws2.addRow(headerResumen);
+
+                ws2.getRow(1).eachCell(cell => {
+                    cell.style = headerStyle;
+                });
+
+                Object.entries(productos).forEach(([nombre, data]) => {
+                    ws2.addRow([
+                        nombre,
+                        data.precios900.length ? Math.round(data.precios900.reduce((a,b)=>a+b)/data.precios900.length) : '-',
+                        data.precios900.length ? Math.min(...data.precios900) : '-',
+                        data.precios900.length ? Math.max(...data.precios900) : '-',
+                        data.precios15L.length ? Math.round(data.precios15L.reduce((a,b)=>a+b)/data.precios15L.length) : '-',
+                        data.precios15L.length ? Math.min(...data.precios15L) : '-',
+                        data.precios15L.length ? Math.max(...data.precios15L) : '-',
+                        data.precios3L.length ? Math.round(data.precios3L.reduce((a,b)=>a+b)/data.precios3L.length) : '-',
+                        data.precios3L.length ? Math.min(...data.precios3L) : '-',
+                        data.precios3L.length ? Math.max(...data.precios3L) : '-',
+                        data.supermercados.size
+                    ]);
+                });
+
+                ws2.columns = [
+                    { width: 25 },
+                    { width: 15 },
+                    { width: 12 },
+                    { width: 12 },
+                    { width: 15 },
+                    { width: 12 },
+                    { width: 12 },
+                    { width: 15 },
+                    { width: 12 },
+                    { width: 12 },
+                    { width: 15 }
+                ];
+
+                ws2.eachRow((row, rowNumber) => {
+                    if (rowNumber > 1) {
+                        row.eachCell(cell => {
+                            cell.border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
+                            cell.alignment = { horizontal: 'center' };
+                        });
+                    }
+                });
+
+                // ===== HOJA 3: RESUMEN POR SUPERMERCADO =====
+                const ws3 = workbook.addWorksheet('Resumen Supermercados');
+
+                const supermercados = {};
+                registrosFiltrados.forEach(r => {
+                    if (!supermercados[r.negocio]) {
+                        supermercados[r.negocio] = {
+                            registros: 0,
+                            productos: new Set(),
+                            usuarios: new Set()
+                        };
+                    }
+                    supermercados[r.negocio].registros++;
+                    supermercados[r.negocio].productos.add(r.producto);
+                    supermercados[r.negocio].usuarios.add(r.usuario);
+                });
+
+                const headerSuper = ['Supermercado', 'Registros', 'Productos', 'Usuarios'];
+                ws3.addRow(headerSuper);
+
+                ws3.getRow(1).eachCell(cell => {
+                    cell.style = headerStyle;
+                });
+
+                Object.entries(supermercados).forEach(([nombre, data]) => {
+                    ws3.addRow([
+                        nombre,
+                        data.registros,
+                        data.productos.size,
+                        data.usuarios.size
+                    ]);
+                });
+
+                ws3.columns = [
+                    { width: 30 },
+                    { width: 15 },
+                    { width: 15 },
+                    { width: 15 }
+                ];
+
+                ws3.eachRow((row, rowNumber) => {
+                    if (rowNumber > 1) {
+                        row.eachCell(cell => {
+                            cell.border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
+                            cell.alignment = { horizontal: 'center' };
+                        });
+                    }
+                });
+
+                // Descargar
+                const fecha = new Date().toLocaleDateString('es-CR').replace(/\//g, '-');
+                await workbook.xlsx.writeFile(`Consolidado_Precios_${fecha}.xlsx`);
+                mostrarAlerta('✅ Excel corporativo descargado correctamente', 'success');
+
+            } catch (error) {
+                console.error('Error exportando Excel:', error);
+                mostrarAlerta('❌ Error al exportar Excel. Intenta de nuevo.', 'error');
             }
-
-            XLSX.utils.book_append_sheet(wb, ws1, 'Consolidado');
-
-            // ===== HOJA 2: RESUMEN POR PRODUCTO =====
-            const productos = {};
-            registrosFiltrados.forEach(r => {
-                if (!productos[r.producto]) {
-                    productos[r.producto] = {
-                        precios900: [],
-                        precios15L: [],
-                        precios3L: [],
-                        supermercados: new Set()
-                    };
-                }
-                if (r.precio900 > 0) productos[r.producto].precios900.push(r.precio900);
-                if (r.precio15L > 0) productos[r.producto].precios15L.push(r.precio15L);
-                if (r.precio3L > 0) productos[r.producto].precios3L.push(r.precio3L);
-                productos[r.producto].supermercados.add(r.negocio);
-            });
-
-            const resumenProductos = Object.entries(productos).map(([nombre, data]) => ({
-                'Producto': nombre,
-                'Promedio 900ml': data.precios900.length ? Math.round(data.precios900.reduce((a,b)=>a+b)/data.precios900.length) : '-',
-                'Mín 900ml': data.precios900.length ? Math.min(...data.precios900) : '-',
-                'Máx 900ml': data.precios900.length ? Math.max(...data.precios900) : '-',
-                'Promedio 1.5L': data.precios15L.length ? Math.round(data.precios15L.reduce((a,b)=>a+b)/data.precios15L.length) : '-',
-                'Mín 1.5L': data.precios15L.length ? Math.min(...data.precios15L) : '-',
-                'Máx 1.5L': data.precios15L.length ? Math.max(...data.precios15L) : '-',
-                'Promedio 3L': data.precios3L.length ? Math.round(data.precios3L.reduce((a,b)=>a+b)/data.precios3L.length) : '-',
-                'Mín 3L': data.precios3L.length ? Math.min(...data.precios3L) : '-',
-                'Máx 3L': data.precios3L.length ? Math.max(...data.precios3L) : '-',
-                'Supermercados': data.supermercados.size
-            }));
-
-            const ws2 = XLSX.utils.json_to_sheet(resumenProductos);
-            ws2['!cols'] = [
-                { wch: 25 },
-                { wch: 15 },
-                { wch: 12 },
-                { wch: 12 },
-                { wch: 15 },
-                { wch: 12 },
-                { wch: 12 },
-                { wch: 15 },
-                { wch: 12 },
-                { wch: 12 },
-                { wch: 15 }
-            ];
-
-            for (let col = 0; col < 11; col++) {
-                const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
-                ws2[cellRef].s = encabezadoStyle;
-            }
-
-            XLSX.utils.book_append_sheet(wb, ws2, 'Resumen Productos');
-
-            // ===== HOJA 3: RESUMEN POR SUPERMERCADO =====
-            const supermercados = {};
-            registrosFiltrados.forEach(r => {
-                if (!supermercados[r.negocio]) {
-                    supermercados[r.negocio] = {
-                        registros: 0,
-                        productos: new Set(),
-                        usuarios: new Set()
-                    };
-                }
-                supermercados[r.negocio].registros++;
-                supermercados[r.negocio].productos.add(r.producto);
-                supermercados[r.negocio].usuarios.add(r.usuario);
-            });
-
-            const resumenSupermercados = Object.entries(supermercados).map(([nombre, data]) => ({
-                'Supermercado': nombre,
-                'Registros': data.registros,
-                'Productos': data.productos.size,
-                'Usuarios': data.usuarios.size
-            }));
-
-            const ws3 = XLSX.utils.json_to_sheet(resumenSupermercados);
-            ws3['!cols'] = [
-                { wch: 30 },
-                { wch: 15 },
-                { wch: 15 },
-                { wch: 15 }
-            ];
-
-            for (let col = 0; col < 4; col++) {
-                const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
-                ws3[cellRef].s = encabezadoStyle;
-            }
-
-            XLSX.utils.book_append_sheet(wb, ws3, 'Resumen Supermercados');
-
-            // Descargar
-            const fecha = new Date().toLocaleDateString('es-CR').replace(/\//g, '-');
-            XLSX.writeFile(wb, `Consolidado_Precios_${fecha}.xlsx`);
-            mostrarAlerta('✅ Excel corporativo descargado', 'success');
         }
 
         function exportarCSV() {
