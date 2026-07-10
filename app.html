@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Levantamiento de precios de aceites - Supermercados">
+    <meta name="theme-color" content="#1e40af">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Precios Aceites">
+    <meta name="format-detection" content="telephone=no">
+    <title>Precios - Supermercados</title>
+    <link rel="manifest" href="./manifest.json">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            min-height: 100vh;
+            padding: 16px;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .header-left p {
+            opacity: 0.9;
+            font-size: 13px;
+        }
+
+        .user-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .sync-status {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: pulse 2s infinite;
+        }
+
+        .sync-status.online {
+            background: #22c55e;
+        }
+
+        .sync-status.offline {
+            background: #ef4444;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .content {
+            padding: 24px;
+        }
+
+        .form-section {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .form-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 16px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        @media (max-width: 640px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        input, select {
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #1e40af;
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+        }
+
+        .presentation-section {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .presentation-title {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+
+        .presentation-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .presentation-input {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .presentation-input label {
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .presentation-input input {
+            padding: 8px 10px;
+            font-size: 13px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .btn-primary {
+            background: #1e40af;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #1e3a8a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #4b5563;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+            flex: none;
+            width: auto;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #b91c1c;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .table-section {
+            margin-top: 32px;
+        }
+
+        .table-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .record-count {
+            font-size: 14px;
+            color: #6b7280;
+            font-weight: 400;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead {
+            background: #f3f4f6;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+
+        .price-cell {
+            font-weight: 500;
+            color: #1e40af;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f4f6;
+            border-top: 2px solid #1e40af;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 16px;
+            font-size: 20px;
+        }
+
+        .modal-content input {
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- MODAL DE LOGIN INICIAL -->
+    <div id="modalLogin" class="modal active">
+        <div class="modal-content">
+            <h2>👤 Identificación</h2>
+            <p style="margin-bottom: 16px; color: #6b7280; font-size: 14px;">Ingresa tu nombre para comenzar</p>
+            <input type="text" id="inputNombreUsuario" placeholder="Tu nombre completo" autofocus>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="cerrarModalLogin()">Cancelar</button>
+                <button class="btn btn-primary" onclick="iniciarSesion()">Continuar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1>💰 Levantamiento de Precios</h1>
+                <p id="headerStatus"><span class="sync-status offline"></span>Conectando...</p>
+            </div>
+            <div style="text-align: right;">
+                <div class="user-badge" id="userBadge">Usuario</div>
+                <button class="btn btn-secondary" onclick="cerrarSesion()" style="margin-top: 8px; width: 100%; padding: 6px;">Salir</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- FORMULARIO -->
+            <div class="form-section">
+                <div class="form-title">📋 Capturar Datos</div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="nombreNegocio">Nombre del Supermercado *</label>
+                        <input type="text" id="nombreNegocio" placeholder="ej: Supermercado XX">
+                    </div>
+                    <div class="form-group">
+                        <label for="nombreProducto">Nombre del Producto *</label>
+                        <input type="text" id="nombreProducto" placeholder="ej: Aceite Cocinero">
+                    </div>
+                </div>
+
+                <!-- PRESENTACIONES -->
+                <div style="display: grid; gap: 16px;">
+                    <div class="presentation-section">
+                        <div class="presentation-title">🔹 900 ml</div>
+                        <div class="presentation-grid">
+                            <div class="presentation-input">
+                                <label>Precio (₡)</label>
+                                <input type="number" id="precio900" placeholder="0" step="100" min="0">
+                            </div>
+                            <div class="presentation-input">
+                                <label>Stock</label>
+                                <input type="number" id="stock900" placeholder="0" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="presentation-section">
+                        <div class="presentation-title">🔹 1.5 Litros</div>
+                        <div class="presentation-grid">
+                            <div class="presentation-input">
+                                <label>Precio (₡)</label>
+                                <input type="number" id="precio15L" placeholder="0" step="100" min="0">
+                            </div>
+                            <div class="presentation-input">
+                                <label>Stock</label>
+                                <input type="number" id="stock15L" placeholder="0" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="presentation-section">
+                        <div class="presentation-title">🔹 3 Litros</div>
+                        <div class="presentation-grid">
+                            <div class="presentation-input">
+                                <label>Precio (₡)</label>
+                                <input type="number" id="precio3L" placeholder="0" step="100" min="0">
+                            </div>
+                            <div class="presentation-input">
+                                <label>Stock</label>
+                                <input type="number" id="stock3L" placeholder="0" min="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-primary" id="btnAgregar" onclick="agregarRegistro()">➕ Agregar Registro</button>
+                    <button class="btn btn-secondary" onclick="limpiarFormulario()">🗑️ Limpiar</button>
+                </div>
+            </div>
+
+            <!-- TABLA DE REGISTROS -->
+            <div class="table-section">
+                <div class="table-title">
+                    <span>📊 Registros Locales</span>
+                    <span class="record-count" id="recordCount">0 registros</span>
+                </div>
+                <div id="alertContainer"></div>
+                <div class="table-responsive">
+                    <table id="tablaRegistros">
+                        <thead>
+                            <tr>
+                                <th>Supermercado</th>
+                                <th>Producto</th>
+                                <th>900ml</th>
+                                <th>1.5L</th>
+                                <th>3L</th>
+                                <th>Hora</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpoTabla">
+                            <tr class="empty-message">
+                                <td colspan="7">No hay registros aún</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK - Versión Compat (Compatible) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+
+    <script>
+        // CONFIGURACIÓN DE FIREBASE - CREDENCIALES CORRECTAS
+        const firebaseConfig = {
+            apiKey: "AIzaSyAXZBODHmBZ55pbnuskIGOJJDkKirSRM0c",
+            authDomain: "levantamiento-precios.firebaseapp.com",
+            databaseURL: "https://levantamiento-precios-default-rtdb.firebaseio.com",
+            projectId: "levantamiento-precios",
+            storageBucket: "levantamiento-precios.firebasestorage.app",
+            messagingSenderId: "877440962639",
+            appId: "1:877440962639:web:2ca33f963dce920cb41a3a",
+            measurementId: "G-YF5YTSRX1B"
+        };
+
+        // Variables globales
+        let db;
+        let usuarioActual = null;
+        let registrosRef = null;
+
+        // Inicializar Firebase
+        function inicializarFirebase() {
+            try {
+                const app = firebase.initializeApp(firebaseConfig);
+                db = firebase.database(app);
+                console.log('✅ Firebase inicializado');
+                verificarUsuario();
+            } catch (error) {
+                console.error('❌ Error inicializando Firebase:', error);
+                mostrarAlerta('No se pudo conectar a Firebase. Verifica tu configuración.', 'error');
+            }
+        }
+
+        // Gestión de usuario
+        function verificarUsuario() {
+            const usuario = localStorage.getItem('usuarioLevantamiento');
+            if (usuario) {
+                usuarioActual = JSON.parse(usuario);
+                iniciarSesionDirecta();
+            } else {
+                document.getElementById('modalLogin').classList.add('active');
+            }
+        }
+
+        function iniciarSesion() {
+            const nombre = document.getElementById('inputNombreUsuario').value.trim();
+            if (!nombre) {
+                alert('Por favor ingresa tu nombre');
+                return;
+            }
+
+            usuarioActual = {
+                id: Date.now(),
+                nombre: nombre,
+                fecha: new Date().toLocaleString('es-CR')
+            };
+
+            localStorage.setItem('usuarioLevantamiento', JSON.stringify(usuarioActual));
+            cerrarModalLogin();
+            iniciarSesionDirecta();
+        }
+
+        function iniciarSesionDirecta() {
+            document.getElementById('modalLogin').classList.remove('active');
+            document.getElementById('userBadge').innerHTML = `👤 ${usuarioActual.nombre}`;
+            
+            // Conectar a Firebase
+            registrosRef = db.ref(`registros/${usuarioActual.id}`);
+            cargarRegistrosDesdeFirebase();
+            monitorearConexion();
+        }
+
+        function cerrarSesion() {
+            if (confirm('¿Cerrar sesión?')) {
+                localStorage.removeItem('usuarioLevantamiento');
+                location.reload();
+            }
+        }
+
+        function cerrarModalLogin() {
+            // Solo cerrar si hay usuario
+        }
+
+        // Monitorear conexión a Firebase
+        function monitorearConexion() {
+            const connectedRef = db.ref('.info/connected');
+            connectedRef.on('value', function(snap) {
+                const status = document.getElementById('headerStatus');
+                if (snap.val() === true) {
+                    status.innerHTML = '<span class="sync-status online"></span>Sincronizado';
+                } else {
+                    status.innerHTML = '<span class="sync-status offline"></span>Desconectado';
+                }
+            });
+        }
+
+        // Agregar registro
+        function agregarRegistro() {
+            const negocio = document.getElementById('nombreNegocio').value.trim();
+            const marca = document.getElementById('nombreProducto').value.trim();
+            const precio900 = parseFloat(document.getElementById('precio900').value) || 0;
+            const precio15L = parseFloat(document.getElementById('precio15L').value) || 0;
+            const precio3L = parseFloat(document.getElementById('precio3L').value) || 0;
+            const stock900 = parseInt(document.getElementById('stock900').value) || 0;
+            const stock15L = parseInt(document.getElementById('stock15L').value) || 0;
+            const stock3L = parseInt(document.getElementById('stock3L').value) || 0;
+
+            if (!negocio || !marca) {
+                mostrarAlerta('⚠️ Completa Supermercado y Marca', 'error');
+                return;
+            }
+
+            if (precio900 === 0 && precio15L === 0 && precio3L === 0) {
+                mostrarAlerta('⚠️ Ingresa al menos un precio', 'error');
+                return;
+            }
+
+            // Guardar un registro por presentación
+            const presentaciones = [
+                { key: '900ml', precio: precio900, stock: stock900, nombre: '900 ml' },
+                { key: '15L', precio: precio15L, stock: stock15L, nombre: '1.5 L' },
+                { key: '3L', precio: precio3L, stock: stock3L, nombre: '3 L' }
+            ];
+
+            presentaciones.forEach(pres => {
+                if (pres.precio > 0) {
+                    const registro = {
+                        id: Date.now() + Math.random(),
+                        usuario: usuarioActual.nombre,
+                        usuarioId: usuarioActual.id,
+                        negocio,
+                        marca,
+                        producto: 'Aceites',
+                        presentacion: pres.nombre,
+                        precio900: pres.precio,
+                        stock900: pres.stock,
+                        fecha: new Date().toLocaleString('es-CR'),
+                        timestamp: firebase.database.ServerValue.TIMESTAMP
+                    };
+
+                    // Guardar localmente
+                    let registros = JSON.parse(localStorage.getItem('registrosLocales')) || [];
+                    registros.push(registro);
+                    localStorage.setItem('registrosLocales', JSON.stringify(registros));
+
+                    // Sincronizar a Firebase
+                    if (usuarioActual && usuarioActual.id) {
+                        registrosRef.child(registro.id).set(registro)
+                            .catch(error => {
+                                console.log('Error Firebase:', error);
+                            });
+                    }
+                }
+            });
+
+            mostrarAlerta('✅ Registros guardados y sincronizados', 'success');
+            limpiarFormulario();
+            actualizarTabla();
+        }
+
+        // Cargar registros desde Firebase
+        function cargarRegistrosDesdeFirebase() {
+            if (!registrosRef) return;
+
+            registrosRef.on('value', function(snapshot) {
+                const datos = snapshot.val();
+                let registros = [];
+
+                if (datos) {
+                    Object.values(datos).forEach(reg => {
+                        registros.push(reg);
+                    });
+                }
+
+                // Combinar con registros locales sin sincronizar
+                const registrosLocales = JSON.parse(localStorage.getItem('registrosLocales')) || [];
+                const registrosSincronizados = registros.map(r => r.id);
+                
+                registrosLocales.forEach(r => {
+                    if (!registrosSincronizados.includes(r.id)) {
+                        registros.push(r);
+                    }
+                });
+
+                localStorage.setItem('registrosLocales', JSON.stringify(registros));
+                actualizarTabla();
+            });
+        }
+
+        // Actualizar tabla
+        function actualizarTabla() {
+            const registros = JSON.parse(localStorage.getItem('registrosLocales')) || [];
+            const cuerpo = document.getElementById('cuerpoTabla');
+            const contador = document.getElementById('recordCount');
+
+            if (registros.length === 0) {
+                cuerpo.innerHTML = '<tr class="empty-message"><td colspan="7">No hay registros aún</td></tr>';
+                contador.textContent = '0 registros';
+                return;
+            }
+
+            cuerpo.innerHTML = registros.map(r => `
+                <tr>
+                    <td><strong>${r.negocio}</strong></td>
+                    <td>${r.producto}</td>
+                    <td class="price-cell">₡${r.precio900.toLocaleString('es-CR')}</td>
+                    <td class="price-cell">₡${r.precio15L.toLocaleString('es-CR')}</td>
+                    <td class="price-cell">₡${r.precio3L.toLocaleString('es-CR')}</td>
+                    <td style="font-size: 12px; color: #6b7280;">${r.fecha.split(' ')[1] || ''}</td>
+                    <td>
+                        <button class="btn btn-danger" onclick="eliminarRegistro(${r.id})">×</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            contador.textContent = `${registros.length} ${registros.length === 1 ? 'registro' : 'registros'}`;
+        }
+
+        function eliminarRegistro(id) {
+            if (!confirm('¿Eliminar registro?')) return;
+
+            let registros = JSON.parse(localStorage.getItem('registrosLocales')) || [];
+            registros = registros.filter(r => r.id !== id);
+            localStorage.setItem('registrosLocales', JSON.stringify(registros));
+
+            if (registrosRef) {
+                registrosRef.child(id).remove();
+            }
+
+            mostrarAlerta('Registro eliminado', 'info');
+            actualizarTabla();
+        }
+
+        function limpiarFormulario() {
+            ['nombreNegocio', 'nombreProducto', 'precio900', 'precio15L', 'precio3L', 'stock900', 'stock15L', 'stock3L'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            document.getElementById('nombreNegocio').focus();
+        }
+
+        function mostrarAlerta(mensaje, tipo) {
+            const container = document.getElementById('alertContainer');
+            const alerta = document.createElement('div');
+            alerta.className = `alert alert-${tipo}`;
+            alerta.textContent = mensaje;
+            container.innerHTML = '';
+            container.appendChild(alerta);
+            
+            setTimeout(() => alerta.remove(), 3000);
+        }
+
+        // Service Worker para PWA
+        // Service Worker desactivado (GitHub Pages no soporta data: URLs)
+
+        // Inicializar
+        inicializarFirebase();
+    </script>
+</body>
+</html>
