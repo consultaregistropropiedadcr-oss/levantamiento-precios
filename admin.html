@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Panel de Administrador - Consolidado de precios">
+    <meta name="theme-color" content="#7c3aed">
+    <title>Admin - Consolidado Precios</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 16px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+            padding: 32px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.2) 0%, rgba(109, 40, 217, 0.2) 100%);
+            border: 1px solid #5b21b6;
+            padding: 20px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #a78bfa;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #c4b5fd;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+            color: white;
+            border: 1px solid #8b5cf6;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(124, 58, 237, 0.3);
+        }
+
+        .btn-secondary {
+            background: #1e293b;
+            color: #e2e8f0;
+            border: 1px solid #334155;
+        }
+
+        .btn-secondary:hover {
+            background: #334155;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .search-box input, .search-box select {
+            padding: 10px 12px;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            background: #1e293b;
+            color: #e2e8f0;
+            font-size: 14px;
+        }
+
+        .search-box input::placeholder {
+            color: #64748b;
+        }
+
+        .search-box input:focus, .search-box select:focus {
+            outline: none;
+            border-color: #7c3aed;
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 0;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            color: #94a3b8;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            color: #c4b5fd;
+            border-bottom-color: #7c3aed;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 8px;
+            background: #1e293b;
+            border: 1px solid #334155;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead {
+            background: #0f172a;
+            border-bottom: 2px solid #334155;
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #a78bfa;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #334155;
+        }
+
+        tbody tr:hover {
+            background: #334155;
+        }
+
+        .price-cell {
+            font-weight: 600;
+            color: #86efac;
+        }
+
+        .user-cell {
+            color: #93c5fd;
+            font-size: 12px;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .alert-info {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid #3b82f6;
+            color: #93c5fd;
+        }
+
+        .alert-success {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid #22c55e;
+            color: #86efac;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #475569;
+            border-top: 2px solid #7c3aed;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .chart-container {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #c4b5fd;
+            margin-bottom: 16px;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
+        .comparison-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .comparison-card h3 {
+            font-size: 14px;
+            color: #a78bfa;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 8px;
+        }
+
+        .comparison-card p {
+            font-size: 13px;
+            color: #cbd5e1;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .comparison-price {
+            font-weight: 600;
+            color: #86efac;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            background: #334155;
+            color: #cbd5e1;
+        }
+
+        .badge-nuevo {
+            background: rgba(34, 197, 94, 0.3);
+            color: #86efac;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <h1>📊 Panel de Administrador</h1>
+            <p>Consolidado de Levantamiento de Precios - Todos los Supermercados</p>
+        </div>
+
+        <!-- ESTADÍSTICAS -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total de Registros</div>
+                <div class="stat-value" id="totalRegistros">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Supermercados</div>
+                <div class="stat-value" id="totalSupermercados">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Productos Únicos</div>
+                <div class="stat-value" id="totalProductos">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Usuarios Activos</div>
+                <div class="stat-value" id="totalUsuarios">0</div>
+            </div>
+        </div>
+
+        <!-- CONTROLES -->
+        <div class="controls">
+            <button class="btn btn-primary" onclick="exportarExcel()">📥 Exportar Excel</button>
+            <button class="btn btn-primary" onclick="exportarCSV()">📄 Exportar CSV</button>
+            <button class="btn btn-secondary" onclick="recargarDatos()">🔄 Recargar Datos</button>
+            <button class="btn btn-danger" onclick="limpiarTodos()">🗑️ Limpiar Todo</button>
+        </div>
+
+        <!-- BÚSQUEDA -->
+        <div class="search-box">
+            <input type="text" id="filtroNegocio" placeholder="Filtrar por supermercado...">
+            <input type="text" id="filtroProducto" placeholder="Filtrar por producto...">
+            <select id="filtroUsuario">
+                <option value="">Todos los usuarios</option>
+            </select>
+            <button class="btn btn-secondary" onclick="aplicarFiltros()">🔍 Filtrar</button>
+        </div>
+
+        <!-- ALERTAS -->
+        <div id="alertContainer"></div>
+
+        <!-- TABS -->
+        <div class="tabs">
+            <button class="tab active" onclick="cambiarTab('registros')">📋 Todos los Registros</button>
+            <button class="tab" onclick="cambiarTab('comparativa')">📊 Comparativa de Precios</button>
+            <button class="tab" onclick="cambiarTab('usuarios')">👥 Actividad por Usuario</button>
+            <button class="tab" onclick="cambiarTab('resumen')">📈 Resumen</button>
+        </div>
+
+        <!-- TAB: TODOS LOS REGISTROS -->
+        <div id="registros" class="tab-content active">
+            <div class="table-responsive">
+                <table id="tablaRegistros">
+                    <thead>
+                        <tr>
+                            <th>Supermercado</th>
+                            <th>Marca</th>
+                            <th>Producto</th>
+                            <th>Presentación</th>
+                            <th>Precio (₡)</th>
+                            <th>Stock</th>
+                            <th>Usuario</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoTablaRegistros">
+                        <tr class="empty-message">
+                            <td colspan="8">Cargando datos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB: COMPARATIVA -->
+        <div id="comparativa" class="tab-content">
+            <div class="chart-container">
+                <div class="chart-title">Precio Promedio por Producto</div>
+                <div class="comparison-grid" id="comparativaGrid">
+                    <p class="empty-message">Cargando datos...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: USUARIOS -->
+        <div id="usuarios" class="tab-content">
+            <div class="table-responsive">
+                <table id="tablaUsuarios">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Registros</th>
+                            <th>Supermercados</th>
+                            <th>Última Actividad</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoTablaUsuarios">
+                        <tr class="empty-message">
+                            <td colspan="4">Cargando datos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB: RESUMEN -->
+        <div id="resumen" class="tab-content">
+            <div class="chart-container">
+                <div class="chart-title">📌 Resumen General</div>
+                <div id="resumenContent" style="color: #cbd5e1; line-height: 1.8;">
+                    <p><span class="loading"></span> Cargando resumen...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK - Versión Compat (Compatible) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+
+    <!-- ExcelJS para Excel profesional -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+
+    <script>
+        // CONFIGURACIÓN DE FIREBASE - CREDENCIALES CORRECTAS
+        const firebaseConfig = {
+            apiKey: "AIzaSyAXZBODHmBZ55pbnuskIGOJJDkKirSRM0c",
+            authDomain: "levantamiento-precios.firebaseapp.com",
+            databaseURL: "https://levantamiento-precios-default-rtdb.firebaseio.com",
+            projectId: "levantamiento-precios",
+            storageBucket: "levantamiento-precios.firebasestorage.app",
+            messagingSenderId: "877440962639",
+            appId: "1:877440962639:web:2ca33f963dce920cb41a3a",
+            measurementId: "G-YF5YTSRX1B"
+        };
+
+        let db;
+        let todosRegistros = [];
+        let registrosFiltrados = [];
+
+        function inicializarFirebase() {
+            try {
+                const app = firebase.initializeApp(firebaseConfig);
+                db = firebase.database(app);
+                console.log('✅ Firebase Admin inicializado');
+                cargarTodosLosDatos();
+            } catch (error) {
+                console.error('❌ Error:', error);
+                mostrarAlerta('Error conectando a Firebase', 'error');
+            }
+        }
+
+        function cargarTodosLosDatos() {
+            const registrosRef = db.ref('levantamientos');
+            registrosRef.on('value', function(snapshot) {
+                todosRegistros = [];
+                const datos = snapshot.val();
+
+                if (datos) {
+                    // Procesar Aceites
+                    if (datos.aceites) {
+                        Object.keys(datos.aceites).forEach(usuarioId => {
+                            Object.keys(datos.aceites[usuarioId]).forEach(registroId => {
+                                const reg = datos.aceites[usuarioId][registroId];
+                                
+                                // Convertir datos por presentación a registros individuales
+                                Object.entries(reg.datos || {}).forEach(([key, valor]) => {
+                                    todosRegistros.push({
+                                        id: reg.id,
+                                        usuario: reg.usuario,
+                                        usuarioId: reg.usuarioId,
+                                        negocio: reg.negocio,
+                                        marca: reg.marca || 'Sin marca',
+                                        producto: 'Aceites',
+                                        presentacion: key === '900ml' ? '900 ml' : key === '15L' ? '1.5 L' : '3 L',
+                                        precio900: valor.precio || 0,
+                                        precio15L: 0,
+                                        precio3L: 0,
+                                        stock900: valor.stock || 0,
+                                        stock15L: 0,
+                                        stock3L: 0,
+                                        fecha: reg.fecha,
+                                        timestamp: reg.timestamp
+                                    });
+                                });
+                            });
+                        });
+                    }
+
+                    // Procesar Café
+                    if (datos.cafe) {
+                        Object.keys(datos.cafe).forEach(usuarioId => {
+                            Object.keys(datos.cafe[usuarioId]).forEach(registroId => {
+                                const reg = datos.cafe[usuarioId][registroId];
+                                
+                                Object.entries(reg.datos || {}).forEach(([key, valor]) => {
+                                    todosRegistros.push({
+                                        id: reg.id,
+                                        usuario: reg.usuario,
+                                        usuarioId: reg.usuarioId,
+                                        negocio: reg.negocio,
+                                        marca: reg.marca || 'Sin marca',
+                                        producto: 'Café',
+                                        presentacion: key === '125g' ? '125 g' : key === '250g' ? '250 g' : key === '500g' ? '500 g' : key === '750g' ? '750 g' : '800 g',
+                                        precio900: valor.precio || 0,
+                                        precio15L: 0,
+                                        precio3L: 0,
+                                        stock900: valor.stock || 0,
+                                        stock15L: 0,
+                                        stock3L: 0,
+                                        fecha: reg.fecha,
+                                        timestamp: reg.timestamp
+                                    });
+                                });
+                            });
+                        });
+                    }
+                }
+
+                registrosFiltrados = [...todosRegistros];
+                actualizarEstadisticas();
+                actualizarTablas();
+                poblarFiltroUsuarios();
+            });
+        }
+
+        function actualizarEstadisticas() {
+            const totalReg = todosRegistros.length;
+            const supermercados = new Set(todosRegistros.map(r => r.negocio)).size;
+            const productos = new Set(todosRegistros.map(r => r.producto)).size;
+            const usuarios = new Set(todosRegistros.map(r => r.usuario)).size;
+
+            document.getElementById('totalRegistros').textContent = totalReg;
+            document.getElementById('totalSupermercados').textContent = supermercados;
+            document.getElementById('totalProductos').textContent = productos;
+            document.getElementById('totalUsuarios').textContent = usuarios;
+        }
+
+        function actualizarTablas() {
+            actualizarTablaRegistros();
+            actualizarComparativa();
+            actualizarTablaUsuarios();
+            actualizarResumen();
+        }
+
+        function actualizarTablaRegistros() {
+            const cuerpo = document.getElementById('cuerpoTablaRegistros');
+            
+            if (registrosFiltrados.length === 0) {
+                cuerpo.innerHTML = '<tr class="empty-message"><td colspan="9">No hay registros</td></tr>';
+                return;
+            }
+
+            cuerpo.innerHTML = registrosFiltrados
+                .sort((a, b) => b.timestamp - a.timestamp)
+                .slice(0, 500)
+                .map(r => `
+                    <tr>
+                        <td><strong>${r.negocio}</strong></td>
+                        <td><strong>${r.marca}</strong></td>
+                        <td><strong>${r.producto}</strong></td>
+                        <td>${r.presentacion}</td>
+                        <td class="price-cell">₡${r.precio900.toLocaleString('es-CR')}</td>
+                        <td>${r.stock900}</td>
+                        <td class="user-cell">${r.usuario}</td>
+                        <td style="font-size: 12px; color: #94a3b8;">${r.fecha}</td>
+                    </tr>
+                `)
+                .join('');
+        }
+
+        function actualizarComparativa() {
+            const productos = {};
+
+            registrosFiltrados.forEach(r => {
+                if (!productos[r.producto]) {
+                    productos[r.producto] = { 
+                        precios900: [], 
+                        precios15L: [], 
+                        precios3L: [],
+                        supermercados: new Set()
+                    };
+                }
+                if (r.precio900 > 0) productos[r.producto].precios900.push(r.precio900);
+                if (r.precio15L > 0) productos[r.producto].precios15L.push(r.precio15L);
+                if (r.precio3L > 0) productos[r.producto].precios3L.push(r.precio3L);
+                productos[r.producto].supermercados.add(r.negocio);
+            });
+
+            let html = '';
+            Object.entries(productos).forEach(([nombre, data]) => {
+                const prom900 = data.precios900.length ? Math.round(data.precios900.reduce((a,b)=>a+b)/data.precios900.length) : 0;
+                const prom15L = data.precios15L.length ? Math.round(data.precios15L.reduce((a,b)=>a+b)/data.precios15L.length) : 0;
+                const prom3L = data.precios3L.length ? Math.round(data.precios3L.reduce((a,b)=>a+b)/data.precios3L.length) : 0;
+                const min900 = data.precios900.length ? Math.min(...data.precios900) : 0;
+                const max900 = data.precios900.length ? Math.max(...data.precios900) : 0;
+
+                html += `
+                    <div class="comparison-card">
+                        <h3>${nombre}</h3>
+                        <p>900ml Promedio: <span class="comparison-price">₡${prom900.toLocaleString('es-CR')}</span></p>
+                        <p style="font-size: 12px;">Min: ₡${min900.toLocaleString('es-CR')} | Max: ₡${max900.toLocaleString('es-CR')}</p>
+                        <p>1.5L Promedio: <span class="comparison-price">₡${prom15L.toLocaleString('es-CR')}</span></p>
+                        <p>3L Promedio: <span class="comparison-price">₡${prom3L.toLocaleString('es-CR')}</span></p>
+                        <p style="margin-top: 8px; font-size: 12px; color: #a78bfa;">En ${data.supermercados.size} supermercados</p>
+                    </div>
+                `;
+            });
+
+            document.getElementById('comparativaGrid').innerHTML = html || '<p class="empty-message">Sin datos</p>';
+        }
+
+        function actualizarTablaUsuarios() {
+            const usuarios = {};
+
+            registrosFiltrados.forEach(r => {
+                if (!usuarios[r.usuario]) {
+                    usuarios[r.usuario] = {
+                        registros: 0,
+                        supermercados: new Set(),
+                        lastUpdate: r.fecha
+                    };
+                }
+                usuarios[r.usuario].registros++;
+                usuarios[r.usuario].supermercados.add(r.negocio);
+                if (new Date(r.fecha) > new Date(usuarios[r.usuario].lastUpdate)) {
+                    usuarios[r.usuario].lastUpdate = r.fecha;
+                }
+            });
+
+            let html = '';
+            Object.entries(usuarios).forEach(([nombre, data]) => {
+                html += `
+                    <tr>
+                        <td><strong>${nombre}</strong></td>
+                        <td>${data.registros}</td>
+                        <td>${data.supermercados.size}</td>
+                        <td>${data.lastUpdate}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('cuerpoTablaUsuarios').innerHTML = html || '<tr class="empty-message"><td colspan="4">Sin datos</td></tr>';
+        }
+
+        function actualizarResumen() {
+            const totalReg = registrosFiltrados.length;
+            const supermercados = Array.from(new Set(registrosFiltrados.map(r => r.negocio)));
+            const productos = Array.from(new Set(registrosFiltrados.map(r => r.producto)));
+
+            let resumen = `
+                <p><strong>Período:</strong> ${new Date().toLocaleDateString('es-CR')}</p>
+                <p><strong>Total de Registros:</strong> ${totalReg}</p>
+                <p><strong>Supermercados Visitados:</strong> ${supermercados.length}</p>
+                <p><strong>Lista de Supermercados:</strong> ${supermercados.join(', ') || 'N/A'}</p>
+                <p><strong>Productos Catálogados:</strong> ${productos.length}</p>
+                <p><strong>Lista de Productos:</strong> ${productos.slice(0, 5).join(', ')}${productos.length > 5 ? '...' : ''}</p>
+            `;
+
+            document.getElementById('resumenContent').innerHTML = resumen;
+        }
+
+        function poblarFiltroUsuarios() {
+            const usuarios = Array.from(new Set(todosRegistros.map(r => r.usuario)));
+            const select = document.getElementById('filtroUsuario');
+            select.innerHTML = '<option value="">Todos los usuarios</option>';
+            usuarios.forEach(u => {
+                select.innerHTML += `<option value="${u}">${u}</option>`;
+            });
+        }
+
+        function aplicarFiltros() {
+            const negocio = document.getElementById('filtroNegocio').value.toLowerCase();
+            const producto = document.getElementById('filtroProducto').value.toLowerCase();
+            const usuario = document.getElementById('filtroUsuario').value;
+
+            registrosFiltrados = todosRegistros.filter(r => {
+                const cumpleNegocio = !negocio || r.negocio.toLowerCase().includes(negocio);
+                const cumpleProducto = !producto || r.producto.toLowerCase().includes(producto);
+                const cumpleUsuario = !usuario || r.usuario === usuario;
+                return cumpleNegocio && cumpleProducto && cumpleUsuario;
+            });
+
+            actualizarTablas();
+            mostrarAlerta(`✅ ${registrosFiltrados.length} registros encontrados`, 'success');
+        }
+
+        function cambiarTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function exportarExcel() {
+            if (registrosFiltrados.length === 0) {
+                mostrarAlerta('Sin datos para exportar', 'error');
+                return;
+            }
+
+            try {
+                const workbook = new ExcelJS.Workbook();
+
+                // ===== HOJA 1: CONSOLIDADO DETALLADO =====
+                const ws1 = workbook.addWorksheet('Consolidado', { pageSetup: { paperSize: 9, orientation: 'landscape' } });
+
+                // Encabezados
+                const headers = ['Supermercado', 'Marca', 'Producto', 'Presentación', 'Precio (₡)', 'Stock', 'Usuario', 'Fecha y Hora'];
+                ws1.addRow(headers);
+
+                // Estilos encabezado
+                const headerStyle = {
+                    font: { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 },
+                    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1e40af' } },
+                    alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+                    border: { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } }
+                };
+
+                ws1.getRow(1).eachCell(cell => {
+                    cell.style = headerStyle;
+                });
+
+                // Agregar datos
+                registrosFiltrados.forEach(r => {
+                    ws1.addRow([
+                        r.negocio,
+                        r.marca,
+                        r.producto,
+                        r.presentacion,
+                        r.precio900,
+                        r.stock900,
+                        r.usuario,
+                        r.fecha
+                    ]);
+                });
+
+                ws1.columns = [
+                    { width: 25 },
+                    { width: 20 },
+                    { width: 15 },
+                    { width: 20 },
+                    { width: 15 },
+                    { width: 12 },
+                    { width: 20 },
+                    { width: 20 }
+                ];
+
+                ws1.eachRow((row, rowNumber) => {
+                    if (rowNumber > 1) {
+                        row.eachCell(cell => {
+                            cell.border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
+                            cell.alignment = { horizontal: 'left', vertical: 'center' };
+                        });
+                        row.getCell(4).alignment = { horizontal: 'right' };
+                    }
+                });
+
+                // ===== HOJA 2: RESUMEN POR PRODUCTO Y MARCA =====
+                const ws2 = workbook.addWorksheet('Resumen Productos');
+
+                const productos = {};
+                registrosFiltrados.forEach(r => {
+                    const key = `${r.producto}|${r.marca}`;
+                    if (!productos[key]) {
+                        productos[key] = {
+                            precios: [],
+                            supermercados: new Set(),
+                            producto: r.producto,
+                            marca: r.marca,
+                            presentaciones: {}
+                        };
+                    }
+                    productos[key].precios.push(r.precio900);
+                    productos[key].supermercados.add(r.negocio);
+                    
+                    if (!productos[key].presentaciones[r.presentacion]) {
+                        productos[key].presentaciones[r.presentacion] = [];
+                    }
+                    productos[key].presentaciones[r.presentacion].push(r.precio900);
+                });
+
+                const headerResumen = ['Producto', 'Marca', 'Presentación', 'Promedio', 'Mín', 'Máx', 'Supermercados'];
+                ws2.addRow(headerResumen);
+
+                ws2.getRow(1).eachCell(cell => {
+                    cell.style = headerStyle;
+                });
+
+                Object.entries(productos).forEach(([key, data]) => {
+                    Object.entries(data.presentaciones).forEach(([presentacion, precios]) => {
+                        ws2.addRow([
+                            data.producto,
+                            data.marca,
+                            presentacion,
+                            precios.length ? Math.round(precios.reduce((a,b)=>a+b)/precios.length) : '-',
+                            precios.length ? Math.min(...precios) : '-',
+                            precios.length ? Math.max(...precios) : '-',
+                            data.supermercados.size
+                        ]);
+                    });
+                });
+
+                ws2.columns = [
+                    { width: 15 },
+                    { width: 20 },
+                    { width: 20 },
+                    { width: 15 },
+                    { width: 12 },
+                    { width: 12 },
+                    { width: 15 }
+                ];
+
+                ws2.eachRow((row, rowNumber) => {
+                    if (rowNumber > 1) {
+                        row.eachCell(cell => {
+                            cell.border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
+                            cell.alignment = { horizontal: 'center' };
+                        });
+                    }
+                });
+
+                // ===== HOJA 3: RESUMEN POR SUPERMERCADO =====
+                const ws3 = workbook.addWorksheet('Resumen Supermercados');
+
+                const supermercados = {};
+                registrosFiltrados.forEach(r => {
+                    if (!supermercados[r.negocio]) {
+                        supermercados[r.negocio] = {
+                            registros: 0,
+                            productos: new Set(),
+                            usuarios: new Set()
+                        };
+                    }
+                    supermercados[r.negocio].registros++;
+                    supermercados[r.negocio].productos.add(r.producto);
+                    supermercados[r.negocio].usuarios.add(r.usuario);
+                });
+
+                const headerSuper = ['Supermercado', 'Registros', 'Productos', 'Usuarios'];
+                ws3.addRow(headerSuper);
+
+                ws3.getRow(1).eachCell(cell => {
+                    cell.style = headerStyle;
+                });
+
+                Object.entries(supermercados).forEach(([nombre, data]) => {
+                    ws3.addRow([
+                        nombre,
+                        data.registros,
+                        data.productos.size,
+                        data.usuarios.size
+                    ]);
+                });
+
+                ws3.columns = [
+                    { width: 30 },
+                    { width: 15 },
+                    { width: 15 },
+                    { width: 15 }
+                ];
+
+                ws3.eachRow((row, rowNumber) => {
+                    if (rowNumber > 1) {
+                        row.eachCell(cell => {
+                            cell.border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
+                            cell.alignment = { horizontal: 'center' };
+                        });
+                    }
+                });
+
+                // Descargar con Blob
+                const fecha = new Date().toLocaleDateString('es-CR').replace(/\//g, '-');
+                const filename = `Consolidado_Precios_${fecha}.xlsx`;
+                
+                workbook.xlsx.writeBuffer().then(buffer => {
+                    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    mostrarAlerta('✅ Excel corporativo descargado correctamente', 'success');
+                });
+
+            } catch (error) {
+                console.error('Error exportando Excel:', error);
+                mostrarAlerta('❌ Error al exportar Excel. Intenta de nuevo.', 'error');
+            }
+        }
+
+        function exportarCSV() {
+            if (registrosFiltrados.length === 0) {
+                mostrarAlerta('Sin datos para exportar', 'error');
+                return;
+            }
+
+            let csv = 'Supermercado,Producto,900ml,1.5L,3L,Stock Total,Usuario,Fecha\n';
+            registrosFiltrados.forEach(r => {
+                csv += `"${r.negocio}","${r.producto}",${r.precio900},${r.precio15L},${r.precio3L},${(r.stock900||0)+(r.stock15L||0)+(r.stock3L||0)},"${r.usuario}","${r.fecha}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Consolidado_${new Date().toLocaleDateString('es-CR').replace(/\//g, '-')}.csv`;
+            a.click();
+            mostrarAlerta('✅ CSV descargado', 'success');
+        }
+
+        function recargarDatos() {
+            cargarTodosLosDatos();
+            mostrarAlerta('🔄 Datos recargados', 'info');
+        }
+
+        function limpiarTodos() {
+            if (!confirm('⚠️ ¿ELIMINAR TODOS LOS REGISTROS? Esta acción no se puede deshacer.')) return;
+
+            db.ref('registros').remove()
+                .then(() => {
+                    todosRegistros = [];
+                    registrosFiltrados = [];
+                    actualizarTablas();
+                    mostrarAlerta('✅ Todos los datos fueron eliminados', 'success');
+                })
+                .catch(err => mostrarAlerta('❌ Error eliminando datos: ' + err, 'error'));
+        }
+
+        function mostrarAlerta(mensaje, tipo) {
+            const container = document.getElementById('alertContainer');
+            const alerta = document.createElement('div');
+            alerta.className = `alert alert-${tipo}`;
+            alerta.innerHTML = `<span>${mensaje}</span>`;
+            container.innerHTML = '';
+            container.appendChild(alerta);
+            
+            setTimeout(() => alerta.remove(), 3000);
+        }
+
+        // Inicializar
+        inicializarFirebase();
+    </script>
+</body>
+</html>
