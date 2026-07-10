@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Levantamiento de precios de aceites">
+    <meta name="theme-color" content="#1e40af">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Precios">
+    <title>Levantamiento de Precios</title>
+    <link rel="manifest" href="./manifest.json">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            min-height: 100vh;
+            padding: 16px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .header-left h1 { font-size: 24px; margin-bottom: 4px; }
+        .header-left p { opacity: 0.9; font-size: 13px; }
+        .header-right {
+            display: flex;
+            gap: 8px;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+        .user-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            border: 1px solid rgba(255,255,255,0.3);
+            display: inline-block;
+        }
+        .header-buttons {
+            display: flex;
+            gap: 6px;
+        }
+        .btn-header {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-header-primary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .btn-header-primary:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .btn-header-danger {
+            background: #dc2626;
+            color: white;
+        }
+        .btn-header-danger:hover {
+            background: #b91c1c;
+        }
+        .content { padding: 20px; }
+        .form-group {
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #1f2937;
+            font-size: 14px;
+        }
+        input {
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #1e40af;
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+        }
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .section-title {
+            font-weight: 600;
+            color: #1f2937;
+            margin-top: 16px;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: #f3f4f6;
+            border-radius: 6px;
+        }
+        .buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: #1e40af;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #1e3a8a;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 13px;
+            border: 1px solid #e5e7eb;
+        }
+        th {
+            background: #f3f4f6;
+            padding: 10px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        tbody tr:hover {
+            background: #f9fafb;
+        }
+        .empty { text-align: center; color: #6b7280; padding: 30px; }
+        .user-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1>💰 Levantamiento de Precios</h1>
+                <p>Aceites</p>
+            </div>
+            <div class="header-right">
+                <div class="user-badge" id="userBadge">Usuario</div>
+                <div class="header-buttons">
+                    <button class="btn-header btn-header-primary" onclick="limpiarLocales()">🗑️ Borrar Locales</button>
+                    <button class="btn-header btn-header-danger" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div id="alertContainer"></div>
+
+            <form onsubmit="guardar(event)">
+                <div class="row">
+                    <div class="form-group">
+                        <label>Supermercado *</label>
+                        <input type="text" id="supermercado" placeholder="ej: Éxito" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Marca del Aceite *</label>
+                        <input type="text" id="marca" placeholder="ej: Cocinero" required>
+                    </div>
+                </div>
+
+                <div class="section-title">900 ml</div>
+                <div class="row">
+                    <div class="form-group">
+                        <label>Precio (₡)</label>
+                        <input type="number" id="precio900" placeholder="0" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Stock</label>
+                        <input type="number" id="stock900" placeholder="0">
+                    </div>
+                </div>
+
+                <div class="section-title">1.5 Litros</div>
+                <div class="row">
+                    <div class="form-group">
+                        <label>Precio (₡)</label>
+                        <input type="number" id="precio15L" placeholder="0" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Stock</label>
+                        <input type="number" id="stock15L" placeholder="0">
+                    </div>
+                </div>
+
+                <div class="section-title">3 Litros</div>
+                <div class="row">
+                    <div class="form-group">
+                        <label>Precio (₡)</label>
+                        <input type="number" id="precio3L" placeholder="0" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Stock</label>
+                        <input type="number" id="stock3L" placeholder="0">
+                    </div>
+                </div>
+
+                <div class="buttons">
+                    <button type="submit" class="btn-primary">➕ Guardar</button>
+                    <button type="button" class="btn-secondary" onclick="limpiar()">🗑️ Limpiar</button>
+                </div>
+            </form>
+
+            <h3 style="margin-top: 30px; margin-bottom: 16px;">Registros Locales</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Supermercado</th>
+                        <th>Marca</th>
+                        <th>900ml</th>
+                        <th>1.5L</th>
+                        <th>3L</th>
+                        <th>Hora</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla">
+                    <tr class="empty"><td colspan="7">No hay registros</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAXZBODHmBZ55pbnuskIGOJJDkKirSRM0c",
+            authDomain: "levantamiento-precios.firebaseapp.com",
+            databaseURL: "https://levantamiento-precios-default-rtdb.firebaseio.com",
+            projectId: "levantamiento-precios",
+            storageBucket: "levantamiento-precios.firebasestorage.app",
+            messagingSenderId: "877440962639",
+            appId: "1:877440962639:web:2ca33f963dce920cb41a3a",
+            measurementId: "G-YF5YTSRX1B"
+        };
+
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.database(app);
+
+        let usuario = localStorage.getItem('usuario');
+        if (!usuario) {
+            usuario = prompt('Ingresa tu nombre:') || 'Usuario';
+            localStorage.setItem('usuario', usuario);
+        }
+        document.getElementById('userBadge').textContent = '👤 ' + usuario;
+
+        let registros = JSON.parse(localStorage.getItem('registros')) || [];
+
+        function mostrarAlerta(msg, tipo) {
+            const div = document.createElement('div');
+            div.className = `alert alert-${tipo}`;
+            div.textContent = msg;
+            document.getElementById('alertContainer').innerHTML = '';
+            document.getElementById('alertContainer').appendChild(div);
+            setTimeout(() => div.remove(), 3000);
+        }
+
+        function guardar(e) {
+            e.preventDefault();
+
+            const supermercado = document.getElementById('supermercado').value.trim();
+            const marca = document.getElementById('marca').value.trim();
+            const precio900 = parseInt(document.getElementById('precio900').value) || 0;
+            const precio15L = parseInt(document.getElementById('precio15L').value) || 0;
+            const precio3L = parseInt(document.getElementById('precio3L').value) || 0;
+            const stock900 = parseInt(document.getElementById('stock900').value) || 0;
+            const stock15L = parseInt(document.getElementById('stock15L').value) || 0;
+            const stock3L = parseInt(document.getElementById('stock3L').value) || 0;
+
+            if (!supermercado || !marca) {
+                mostrarAlerta('⚠️ Completa Supermercado y Marca', 'error');
+                return;
+            }
+
+            if (precio900 === 0 && precio15L === 0 && precio3L === 0) {
+                mostrarAlerta('⚠️ Ingresa al menos un precio', 'error');
+                return;
+            }
+
+            const id = Math.floor(Date.now() / 1000);
+            const registro = {
+                id,
+                usuario,
+                supermercado,
+                marca,
+                precio900,
+                precio15L,
+                precio3L,
+                stock900,
+                stock15L,
+                stock3L,
+                fecha: new Date().toLocaleString('es-CR')
+            };
+
+            registros.push(registro);
+            localStorage.setItem('registros', JSON.stringify(registros));
+
+            // Guardar en Firebase
+            db.ref('registros/' + usuario + '/' + id).set(registro)
+                .then(() => {
+                    mostrarAlerta('✅ Guardado y sincronizado', 'success');
+                })
+                .catch(() => {
+                    mostrarAlerta('⚠️ Guardado localmente (sin conexión)', 'error');
+                });
+
+            limpiar();
+            mostrarTabla();
+        }
+
+        function limpiar() {
+            document.getElementById('supermercado').value = '';
+            document.getElementById('marca').value = '';
+            document.getElementById('precio900').value = '';
+            document.getElementById('precio15L').value = '';
+            document.getElementById('precio3L').value = '';
+            document.getElementById('stock900').value = '';
+            document.getElementById('stock15L').value = '';
+            document.getElementById('stock3L').value = '';
+        }
+
+        function limpiarLocales() {
+            if (!confirm('⚠️ ¿Eliminar TODOS los registros locales?')) {
+                return;
+            }
+            
+            localStorage.setItem('registros', JSON.stringify([]));
+            registros = [];
+            mostrarAlerta('✅ Registros locales eliminados', 'success');
+            mostrarTabla();
+        }
+
+        function cerrarSesion() {
+            if (!confirm('¿Cerrar sesión?')) {
+                return;
+            }
+            
+            localStorage.removeItem('usuario');
+            location.reload();
+        }
+
+        function eliminar(id) {
+            registros = registros.filter(r => r.id !== id);
+            localStorage.setItem('registros', JSON.stringify(registros));
+            mostrarTabla();
+        }
+
+        function mostrarTabla() {
+            const tbody = document.getElementById('tabla');
+            if (registros.length === 0) {
+                tbody.innerHTML = '<tr class="empty"><td colspan="7">No hay registros</td></tr>';
+                return;
+            }
+            tbody.innerHTML = registros.reverse().map(r => `
+                <tr>
+                    <td>${r.supermercado}</td>
+                    <td><strong>${r.marca}</strong></td>
+                    <td>₡${r.precio900 || '-'}</td>
+                    <td>₡${r.precio15L || '-'}</td>
+                    <td>₡${r.precio3L || '-'}</td>
+                    <td style="font-size: 12px;">${r.fecha.split(' ')[1]}</td>
+                    <td><button onclick="eliminar(${r.id})" style="padding: 4px 8px; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer;">×</button></td>
+                </tr>
+            `).join('');
+        }
+
+        mostrarTabla();
+    </script>
+</body>
+</html>
